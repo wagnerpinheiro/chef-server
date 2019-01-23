@@ -26,7 +26,7 @@ This needs to be done to match the SSL certificate name with the `chef_server_ur
 Docker command:
 
 ```bash
-$ docker run --privileged -t --name chef-server -d -p 443:443 cbuisson/chef-server
+$ docker run --privileged -t --name chef-server -d -p 443:443 wagnerpinheiro/chef-server
 ```
 
 Follow the installation:

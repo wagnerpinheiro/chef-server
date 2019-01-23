@@ -1,0 +1,17 @@
+chef:
+  image: wagnerpinheiro/chef-server
+  container_name: chef-server
+  environment:
+    - SSL_PORT=443
+    - SERVER_NAME=chef-server
+  volumes:
+    - "/var/lib/docker/volumes/chef-server/_data/etc:/etc/opscode"    
+    - "/var/lib/docker/volumes/chef-server/_data/opt:/var/opt/opscode"
+    # - "/var/lib/docker/volumes/chef-server/_data/backup:/var/opt/chef-backup"
+    # - "/var/log/docker/chef-server/:/var/log"
+  # net: "host"
+  ports:
+    - "443:443"
+  restart: always
+  privileged: true
+  mem_limit: 4g

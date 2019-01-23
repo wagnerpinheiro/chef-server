@@ -1,4 +1,5 @@
 #!/bin/bash
+mkdir -p /etc/opscode/keys
 
 # Create chef-server.rb with variables
 echo "nginx['enable_non_ssl']=false" > /etc/opscode/chef-server.rb
@@ -9,10 +10,10 @@ else
   echo "nginx['ssl_port']=$SSL_PORT" >> /etc/opscode/chef-server.rb
 fi
 
-if [[ -z $CONTAINER_NAME ]]; then
+if [[ -z $SERVER_NAME ]]; then
   echo "nginx['server_name']=\"chef-server\"" >> /etc/opscode/chef-server.rb
 else
-  echo "nginx['server_name']=\"$CONTAINER_NAME\"" >> /etc/opscode/chef-server.rb
+  echo "nginx['server_name']=\"$SERVER_NAME\"" >> /etc/opscode/chef-server.rb
 fi
 
 echo -e "\nRunning: 'chef-server-ctl reconfigure'. This step will take a few minutes..."
@@ -52,19 +53,19 @@ fi
 
 echo -e "\n\n$URL is available!\n"
 echo -e "\nSetting up admin user and default organization"
-chef-server-ctl user-create admin Admin User admin@myorg.com "passwd"  --filename /etc/chef/admin.pem
-chef-server-ctl org-create my_org "Default organization" --association_user admin --filename /etc/chef/my_org-validator.pem
+chef-server-ctl user-create admin Admin User admin@myorg.com "passwd"  --filename /etc/opscode/keys/admin.pem
+chef-server-ctl org-create my_org "Default organization" --association_user admin --filename /etc/opscode/keys/my_org-validator.pem
 echo -e "\nRunning: 'chef-server-ctl install chef-manage'"...
 chef-server-ctl install chef-manage
 echo -e "\nRunning: 'chef-server-ctl reconfigure'"...
 chef-server-ctl reconfigure
 echo "{ \"error\": \"Please use https:// instead of http:// !\" }" > /var/opt/opscode/nginx/html/500.json
 sed -i "s,/503.json;,/503.json;\n    error_page 497 =503 /500.json;,g" /var/opt/opscode/nginx/etc/chef_https_lb.conf
-sed -i '$i\    location /knife_admin_key.tar.gz {\n      default_type application/zip;\n      alias /etc/chef/knife_admin_key.tar.gz;\n    }' /var/opt/opscode/nginx/etc/chef_https_lb.conf
+sed -i '$i\    location /knife_admin_key.tar.gz {\n      default_type application/zip;\n      alias /etc/opscode/keys/knife_admin_key.tar.gz;\n    }' /var/opt/opscode/nginx/etc/chef_https_lb.conf
 echo -e "\nCreating tar file with the Knife keys"
-cd /etc/chef/ && tar -cvzf knife_admin_key.tar.gz admin.pem my_org-validator.pem
+cd /etc/opscode/keys/ && tar -cvzf knife_admin_key.tar.gz admin.pem my_org-validator.pem
 echo -e "\nRestart Nginx..."
 chef-server-ctl restart nginx
 chef-server-ctl status
-touch /root/chef_configured
+touch /etc/opscode/chef_configured
 echo -e "\n\nDone!\n"
